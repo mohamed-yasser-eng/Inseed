@@ -1,0 +1,5 @@
+export * from './Users/controllers/auth.controller'
+export * from './Users/controllers/profile.controller'
+export * from './Posts/post.controller'
+export * from './Comments/comment.controller'
+export * from './Reacts/react.controller'

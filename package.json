@@ -1,0 +1,47 @@
+{
+  "name": "social-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
+    "@types/multer": "^2.1.0",
+    "@types/node": "^20.19.27",
+    "@types/nodemailer": "^7.0.4",
+    "nodemon": "^3.1.11",
+    "ts-node": "^10.9.2",
+    "typescript": "5.6"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1011.0",
+    "@aws-sdk/lib-storage": "^3.1015.0",
+    "@aws-sdk/s3-request-presigner": "^3.1011.0",
+    "@types/bcrypt": "^6.0.0",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "fs": "^0.0.1-security",
+    "graphql": "^16.13.2",
+    "graphql-http": "^1.22.4",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^7.8.8",
+    "mongoose-paginate-v2": "^1.9.4",
+    "morgan": "^1.10.1",
+    "multer": "^2.1.1",
+    "nodemailer": "^7.0.11",
+    "socket.io": "^4.8.3",
+    "uninstall": "^0.0.0",
+    "uuid": "^13.0.0",
+    "zod": "^4.3.6"
+  }
+}

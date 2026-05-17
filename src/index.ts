@@ -57,7 +57,7 @@ app.get('/health', (_req: Request, res: Response) => {
   )
 })
 
-
+app.all('/graphql', graphQLRateLimitMiddleware, graphQLHandler)
 
 app.use('/api/auth', controllers.authController)
 app.use('/api/users', controllers.profileController)

@@ -65,7 +65,6 @@ export const ioInitializer = (server: HttpServer) => {
     })
     io.use(socketAuthentication)
     io.on('connection', (socket: Socket) => {
-        console.log('Socket user connected: ', socket.data)
         ChatInitiation(socket)
         socketDisconnection(socket)
     })
@@ -74,14 +73,7 @@ export const ioInitializer = (server: HttpServer) => {
 
 
 export const getIo = () => {
-    try {
-        if (!io) throw new Error('Socket.io instance not initialized')
-        return io
-    } catch (error) {
-        console.log(error);
-
-    }
-
+    return io
 }
 
 

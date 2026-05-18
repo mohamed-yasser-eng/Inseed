@@ -27,16 +27,9 @@ export const sendEmail = async ({ to, cc, subject, content, attachments = [] }: 
 import { EventEmitter } from 'node:events'
 export const localEventEmitter = new EventEmitter()
 
-// localEventEmitter.on('sendEmail',(args:IEmailArgument)=>{
-//     console.log('sending email event has started');
-//     sendEmail(args)
-// })
-
 localEventEmitter.on('sendEmail', async (args: IEmailArgument) => {
   try {
-    console.log('sending email event has started')
     await sendEmail(args)
-    console.log('email sent successfully')
   } catch (error) {
     console.error('email sending failed:', error)
   }

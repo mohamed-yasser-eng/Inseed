@@ -124,10 +124,6 @@ export class S3ClientService {
       leavePartsOnError: false,
     })
 
-    upload.on('httpUploadProgress', (progress) => {
-      console.log(`Uploaded ${progress.loaded} bytes of ${progress.total}`)
-    })
-
     try {
       return await upload.done()
     } finally {

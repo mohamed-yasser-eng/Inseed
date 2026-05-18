@@ -15,8 +15,6 @@ export class ChatService {
 
     async joinPrivateChat(socket: Socket, targetUserId: string) {
 
-        // console.log('join private called ')
-
         if (socket.data.userId === targetUserId) throw new BadRequestException('You cannot start a direct chat with yourself')
 
         const directMembers = [socket.data.userId, targetUserId].sort()
@@ -24,12 +22,7 @@ export class ChatService {
 
         let conversation = await this.conversationRepo.findOneDocument({ type: ChatTypeEnum.DIRECT, directKey })
 
-        // console.log('search for conversation result', conversation);
-
-        // console.log("conversation doesnt exist? :", !conversation);
-
         if (!conversation) {
-            console.log('creating new conversation');
             conversation = await this.conversationRepo.createNewDocument({ type: ChatTypeEnum.DIRECT, members: directMembers, directKey })
         }
         socket.join(conversation._id.toString())
@@ -41,8 +34,6 @@ export class ChatService {
         const { text, targetUserId } = data as { text: string, targetUserId: string }
         const conversation = await this.joinPrivateChat(socket, targetUserId)
 
-        // console.log('socket data from send private message:', socket.data.userId, 'targeted user id:', targetUserId);
-
         // create message 
         const message = await this.messageRepo.createNewDocument({ text, conversationId: conversation._id, senderId: socket.data.userId })
 
@@ -53,9 +44,7 @@ export class ChatService {
 
     async getConversationMessages(socket: Socket, targetUserId: string) {
         const conversation = await this.joinPrivateChat(socket, targetUserId)
-        // console.log('conversation id got from join :', conversation._id);
         const messages = await this.messageRepo.findDocuments({ conversationId: conversation._id })
-        // console.log('messages log ', messages);
         socket.emit('chat-history', messages)
     }
 

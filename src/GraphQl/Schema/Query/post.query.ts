@@ -1,4 +1,4 @@
-import { GraphQLList } from 'graphql'
+import { GraphQLInt, GraphQLList } from 'graphql'
 
 import { postDetailsArgsType } from '../../Args/post.args'
 import PostResolvers from '../../Resolvers/post.resolvers'
@@ -11,6 +11,10 @@ class PostQuery {
     return {
       feed: {
         type: new GraphQLList(FeedPostType),
+        args: {
+          page: { type: GraphQLInt },
+          limit: { type: GraphQLInt },
+        },
         resolve: this.postResolvers.feed,
       },
       postDetails: {

@@ -17,7 +17,7 @@ import { FailedResponse } from './Utils/Response/response-helper.utils'
 import { ioInitializer } from './Gateways/socketIo.gateways'
 import { graphQLHandler } from './GraphQl/index.graphql'
 import { isOriginAllowed } from './Utils'
-import { graphQLRateLimitMiddleware, rateLimitMiddleware } from './Middlewares/rate-limit.middleware'
+import { cleanupUploadedFiles, graphQLRateLimitMiddleware, rateLimitMiddleware } from './Middlewares'
 import { redis } from './Config/redis.config'
 import { SuccessResponse } from './Utils/Response/response-helper.utils'
 
@@ -62,8 +62,10 @@ app.use('/api/posts', controllers.postController)
 app.use('/api/comments', controllers.commentController)
 app.use('/api/reacts', controllers.reactController)
 
-app.use((err: HttpException | Error | null, req: Request, res: Response, next: NextFunction) => {
+app.use(async (err: HttpException | Error | null, req: Request, res: Response, next: NextFunction) => {
   if (err) {
+    await cleanupUploadedFiles(req)
+
     if (err instanceof multer.MulterError) {
       const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : 400
       const message = err.code === 'LIMIT_FILE_SIZE' ? 'Uploaded file is too large' : err.message

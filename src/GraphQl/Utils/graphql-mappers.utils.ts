@@ -2,26 +2,34 @@ import { Types } from 'mongoose'
 
 import { CommentModel, MessageModel, ReactModel } from '../../Db/Models'
 
-const userFields = 'firstName lastName email gender DOB profilePicture coverPicture phoneNumber isVerified'
+const publicUserFields = 'firstName lastName profilePicture coverPicture'
+const privateUserFields = 'firstName lastName email gender DOB profilePicture coverPicture phoneNumber isVerified'
 
-export const graphQLUserPopulateFields = userFields
+export const graphQLPublicUserPopulateFields = publicUserFields
+export const graphQLPrivateUserPopulateFields = privateUserFields
 
 export const toObjectId = (id: string) => new Types.ObjectId(id)
 
 export const toDateString = (value: unknown) => (value instanceof Date ? value.toISOString() : value?.toString())
 
-export const toGraphQLUser = (user: any) => {
+export const toGraphQLUser = (user: any, includePrivateFields = false) => {
   if (!user) return null
 
-  return {
+  const publicUser = {
     id: user._id?.toString(),
     firstName: user.firstName,
     lastName: user.lastName,
+    profilePicture: user.profilePicture,
+    coverPicture: user.coverPicture,
+  }
+
+  if (!includePrivateFields) return publicUser
+
+  return {
+    ...publicUser,
     email: user.email,
     gender: user.gender,
     DOB: toDateString(user.DOB),
-    profilePicture: user.profilePicture,
-    coverPicture: user.coverPicture,
     phoneNumber: user.phoneNumber,
     isVerified: user.isVerified,
   }
@@ -63,6 +71,21 @@ export const getMyReact = async (currentUserId: string, refId: string, onModel: 
   return react?.type || null
 }
 
+type ReactSummary = {
+  like: number
+  love: number
+  haha: number
+  sad: number
+  angry: number
+  total: number
+}
+
+export type GraphQLPostMetrics = {
+  commentsCount?: number
+  reactsSummary?: ReactSummary
+  myReact?: string | null
+}
+
 export const toGraphQLComment = async (comment: any, currentUserId: string) => {
   const commentId = comment._id.toString()
 
@@ -81,14 +104,14 @@ export const toGraphQLComment = async (comment: any, currentUserId: string) => {
 
 export const getPostComments = async (postId: string, currentUserId: string) => {
   const comments = await CommentModel.find({ refId: postId, onModel: 'Post' })
-    .populate('ownerId', userFields)
+    .populate('ownerId', publicUserFields)
     .sort({ createdAt: -1 })
     .lean()
 
   return await Promise.all(comments.map((comment) => toGraphQLComment(comment, currentUserId)))
 }
 
-export const toGraphQLPost = async (post: any, currentUserId: string, includeComments = false) => {
+export const toGraphQLPost = async (post: any, currentUserId: string, includeComments = false, metrics?: GraphQLPostMetrics) => {
   const postId = post._id.toString()
 
   return {
@@ -98,9 +121,9 @@ export const toGraphQLPost = async (post: any, currentUserId: string, includeCom
     owner: toGraphQLUser(post.ownerId),
     allowComments: post.allowComments,
     tags: (post.tags || []).map((tag: any) => toGraphQLUser(tag)).filter(Boolean),
-    commentsCount: await CommentModel.countDocuments({ refId: postId, onModel: 'Post' }),
-    reactsSummary: await getReactSummary(postId, 'Post'),
-    myReact: await getMyReact(currentUserId, postId, 'Post'),
+    commentsCount: metrics?.commentsCount ?? await CommentModel.countDocuments({ refId: postId, onModel: 'Post' }),
+    reactsSummary: metrics?.reactsSummary ?? await getReactSummary(postId, 'Post'),
+    myReact: metrics?.myReact ?? await getMyReact(currentUserId, postId, 'Post'),
     comments: includeComments ? await getPostComments(postId, currentUserId) : [],
     createdAt: toDateString(post.createdAt),
   }
@@ -108,7 +131,7 @@ export const toGraphQLPost = async (post: any, currentUserId: string, includeCom
 
 export const toGraphQLConversation = async (conversation: any) => {
   const lastMessage = await MessageModel.findOne({ conversationId: conversation._id })
-    .populate('senderId', userFields)
+    .populate('senderId', publicUserFields)
     .sort({ createdAt: -1 })
     .lean()
 

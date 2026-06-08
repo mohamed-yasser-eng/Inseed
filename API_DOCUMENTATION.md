@@ -90,7 +90,7 @@ Error:
 | `POST` | `/api/auth/confirmEmail` | No | Email and OTP |
 | `POST` | `/api/auth/signin` | No | Email and password |
 | `POST` | `/api/auth/refresh-token` | Refresh token header | None |
-| `POST` | `/api/auth/signout` | Access token header | None |
+| `POST` | `/api/auth/signout` | Access token header | Refresh token body |
 
 Signup body:
 
@@ -134,11 +134,19 @@ Signin returns:
 }
 ```
 
+Signout body:
+
+```json
+{
+  "refreshToken": "..."
+}
+```
+
 Notes:
 
 - Signup sends an email verification OTP.
 - Users must verify email before signin.
-- Signout blacklists the current access token.
+- Signout blacklists the current access token and submitted refresh token.
 
 ### Users, Profile, Friendships, Groups
 
@@ -361,7 +369,7 @@ Available queries:
 
 | Query | Purpose |
 | --- | --- |
-| `feed` | Feed posts with owner, comments count, react summary, and current user's react |
+| `feed(page: Int, limit: Int)` | Feed posts with owner, comments count, react summary, and current user's react |
 | `postDetails(postId: ID!)` | Single post with comments |
 | `profileDashboard` | Current user, recent posts, friendship summary, groups |
 | `conversations` | Current user's conversations with members and last message |
@@ -370,7 +378,7 @@ Feed example:
 
 ```graphql
 query {
-  feed {
+  feed(page: 1, limit: 10) {
     id
     description
     attachments

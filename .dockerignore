@@ -3,12 +3,12 @@ dist
 .git
 .env
 .env.local
-.env.*.local
+
 logs
-*.log
+
 access.log
 npm-debug.log*
-.history
-.vscode
-.idea
+
+
+
 PRODUCTION_READINESS.md

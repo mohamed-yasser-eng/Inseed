@@ -36,43 +36,52 @@ export class ChatEvents {
         return result.data
     }
 
+    private async executeEvent(handler: () => Promise<void>) {
+        try {
+            await handler()
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Socket event failed'
+            this.socket.emit('error', { message })
+        }
+    }
+
 
 
     sendPrivateMessageEvent() {
-        this.socket.on('send-private-message', async (data) => {
+        this.socket.on('send-private-message', (data) => this.executeEvent(async () => {
             if (!(await this.canSendMessage('send-private-message'))) return
             const validData = this.validateEventData(SendPrivateMessageEventValidator, data)
             if (!validData) return
-            this.chatService.sendPrivateMessage(this.socket, validData)
-        })
+            await this.chatService.sendPrivateMessage(this.socket, validData)
+        }))
     }
 
 
     getConversationMessagesEvent() {
-        this.socket.on('get-chat-history', async (data) => {
+        this.socket.on('get-chat-history', (data) => this.executeEvent(async () => {
             if (!(await this.canReadHistory('get-chat-history'))) return
             const targetUserId = this.validateEventData(GetChatHistoryEventValidator, data)
             if (!targetUserId) return
-            this.chatService.getConversationMessages(this.socket, targetUserId)
-        })
+            await this.chatService.getConversationMessages(this.socket, targetUserId)
+        }))
     }
 
     sendgroupMessageEvent() {
-        this.socket.on('send-group-message', async (data) => {
+        this.socket.on('send-group-message', (data) => this.executeEvent(async () => {
             if (!(await this.canSendMessage('send-group-message'))) return
             const validData = this.validateEventData(SendGroupMessageEventValidator, data)
             if (!validData) return
-            this.chatService.sendGroupMessage(this.socket, validData)
-        })
+            await this.chatService.sendGroupMessage(this.socket, validData)
+        }))
     }
 
     getGroupHistoryEvent() {
-        this.socket.on('get-group-chat', async (data) => {
+        this.socket.on('get-group-chat', (data) => this.executeEvent(async () => {
             if (!(await this.canReadHistory('get-group-chat'))) return
             const targetGroupId = this.validateEventData(GetGroupChatEventValidator, data)
             if (!targetGroupId) return
-            this.chatService.getGroupHistory(this.socket, targetGroupId)
-        })
+            await this.chatService.getGroupHistory(this.socket, targetGroupId)
+        }))
     }
 }
 

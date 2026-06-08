@@ -11,6 +11,12 @@ export const redis = new Redis(redisUrl, {
   maxRetriesPerRequest: null,
 });
 
+
+// export const redis = new Redis(redisUrl)
+
+
+
+
 redis.on("connect", () => {
   console.log("Redis connection established");
 });

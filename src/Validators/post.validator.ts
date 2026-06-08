@@ -46,4 +46,5 @@ export const UserPostsParamsValidator = {
   params: z.strictObject({
     userId: objectId,
   }),
+  query: ListHomePostsValidator.query,
 }

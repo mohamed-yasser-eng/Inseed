@@ -1,26 +1,28 @@
-FROM node:24-alpine AS build
+# The first base image
+# Can be found at https://hub.docker.com/_/node
+# We can add more than one image
+FROM node:24.0.0
 
+# Create a new directory [Folder on docker]
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
+# Copy package.json and package-lock.json from current directory to /app directory
+COPY package*.json .
 
-COPY tsconfig.json ./
-COPY src ./src
+# Install all dependencies [ node_modules ]
+RUN npm install 
+
+# If we write a build script in package.json file
+# RUN npm run build
+
+# Copy all files from current directory to /app directory
+COPY . .
 
 RUN npm run build
-RUN npm prune --omit=dev
 
-FROM node:24-alpine AS production
 
-WORKDIR /app
+# Expose the port the app runs on , JUST FOR DOCUMENTATION
+Expose 5000
 
-ENV NODE_ENV=production
-
-COPY --from=build /app/package*.json ./
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-
-EXPOSE 5000
-
-CMD ["npm", "start"]
+# Start the app
+CMD ["npm", "run", "start"]

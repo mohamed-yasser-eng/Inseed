@@ -79,20 +79,31 @@ socket.on('error', (error) => {
 
 ## 3. Client Events (Emit)
 
+Naming convention (recommended):
+- Private messages: `private.message.send` (client) → `private.message.sent` (server)
+- Group messages: `group.message.send` (client) → `group.message.sent` (server)
+- Chat history: `private.chat.history` / `group.chat.history` (server responses)
+
+Asynchronous acknowledgment pattern (preferred):
+- Emit with an ack callback: `socket.emit(event, payload, (ack) => { /* ack: { success, message, data } */ })`
+- Use the ack for immediate success/failure of the action; the server will still broadcast the resulting message event to room members.
+
 ### Send Private Message
 
 **Emit event:**
 ```typescript
-socket.emit('send-private-message', {
+socket.emit('private.message.send', {
   text: 'Your message',
   targetUserId: 'recipient_id'
+}, (ack) => {
+  // ack: { success: boolean, message?: string, data?: { messageId } }
 });
 ```
 
-**Listen for response:**
+**Listen for broadcast:**
 ```typescript
-socket.on('message-sent', (message) => {
-  // Message received by all in conversation
+socket.on('private.message.sent', (message) => {
+  // New message in this private conversation
 });
 ```
 
@@ -107,12 +118,14 @@ socket.on('message-sent', (message) => {
 
 **Emit event:**
 ```typescript
-socket.emit('get-chat-history', 'other_user_id');
+socket.emit('private.chat.request', { targetUserId: 'other_user_id' }, (ack) => {
+  // ack.data.messages -> array of messages (optional if server instead emits 'private.chat.history')
+});
 ```
 
 **Listen for response:**
 ```typescript
-socket.on('chat-history', (messages) => {
+socket.on('private.chat.history', (messages) => {
   // Array of messages
 });
 ```
@@ -128,16 +141,18 @@ socket.on('chat-history', (messages) => {
 
 **Emit event:**
 ```typescript
-socket.emit('send-group-message', {
+socket.emit('group.message.send', {
   text: 'Your message',
   targetGroupId: 'group_id'
+}, (ack) => {
+  // ack: { success, message, data }
 });
 ```
 
-**Listen for response:**
+**Listen for broadcast:**
 ```typescript
-socket.on('message-sent', (message) => {
-  // Message received by all group members
+socket.on('group.message.sent', (message) => {
+  // New message in this group
 });
 ```
 
@@ -153,12 +168,14 @@ socket.on('message-sent', (message) => {
 
 **Emit event:**
 ```typescript
-socket.emit('get-group-chat', 'group_id');
+socket.emit('group.chat.request', { groupId: 'group_id' }, (ack) => {
+  // ack.data.messages or server emits 'group.chat.history'
+});
 ```
 
 **Listen for response:**
 ```typescript
-socket.on('group-chat-history', (messages) => {
+socket.on('group.chat.history', (messages) => {
   // Array of group messages
 });
 ```
@@ -170,46 +187,64 @@ socket.on('group-chat-history', (messages) => {
 
 ---
 
+Note: If your current server uses legacy names (`send-private-message`, `message-sent`), the frontend can map the new names to the server names; updating server to the distinct naming is recommended for clarity.
+
 ## 4. Server Events (Listen)
 
-### message-sent
+Distinct server event names (recommended):
+- `private.message.sent` — broadcast to private conversation participants
+- `group.message.sent` — broadcast to group members
+- `private.chat.history` / `group.chat.history` — history responses (or use ack payload)
+- `error` — global error
 
-Broadcast to all users in the conversation/group room.
+### private.message.sent
+
+Broadcast to all users in the private conversation room.
 
 ```typescript
-socket.on('message-sent', (message) => {
+socket.on('private.message.sent', (message) => {
   // { _id, text, conversationId, senderId, createdAt }
   // Add to UI message list
 });
 ```
 
-Emitted after:
-- `send-private-message` processed
-- `send-group-message` processed
+Emitted after the server processes `private.message.send`. The server also returns an ack to the emitter callback: `{ success: boolean, message?: string, data?: { messageId } }`
 
 ---
 
-### chat-history
+### group.message.sent
 
-Direct response to `get-chat-history` (only to requester).
+Broadcast to all users in the group room.
 
 ```typescript
-socket.on('chat-history', (messages) => {
+socket.on('group.message.sent', (message) => {
+  // { _id, text, conversationId, senderId, createdAt }
+});
+```
+
+Emitted after the server processes `group.message.send`. The emitter receives an ack callback as above.
+
+---
+
+### private.chat.history
+
+Response to `private.chat.request` (only to requester). May be returned via ack or emitted as this event.
+
+```typescript
+socket.on('private.chat.history', (messages) => {
   // Array of message objects
-  // Load into UI
 });
 ```
 
 ---
 
-### group-chat-history
+### group.chat.history
 
-Direct response to `get-group-chat` (only to requester).
+Response to `group.chat.request` (only to requester). May be returned via ack or emitted as this event.
 
 ```typescript
-socket.on('group-chat-history', (messages) => {
+socket.on('group.chat.history', (messages) => {
   // Array of message objects
-  // Load into UI
 });
 ```
 
@@ -225,6 +260,12 @@ socket.on('error', (error) => {
   // Show to user
 });
 ```
+
+
+Acknowledgment pattern summary:
+- Use ack callbacks for immediate action result (create succeeded/failed).
+- Server still broadcasts the `.sent` event to room members to deliver the created message.
+- Ack payload shape: `{ success: boolean, message?: string, data?: any }`.
 
 ---
 
@@ -264,17 +305,71 @@ Hitting limit triggers `error` event: "Too many messages, please slow down."
 
 ---
 
-## 7. Payload Specifications
+## 7. Detailed JSON Payload Specifications
 
-**Message:**
-```typescript
-{ _id, text, conversationId, senderId, createdAt }
+A. Ack Format (used in emitter callback)
+```json
+{
+  "success": true,
+  "message": "Optional human message",
+  "data": { /* optional payload e.g. { messageId: '...' } */ }
+}
 ```
 
-**Validation:**
-- `text`: 1-2000 characters, required
-- `targetUserId`, `targetGroupId`: Valid MongoDB ObjectId
+B. Send Private Message (client → server)
+```json
+{
+  "text": "string (1-2000)",
+  "targetUserId": "string (24-hex ObjectId)"
+}
+```
+
+C. Private Message Sent (server → room)
+```json
+{
+  "_id": "string",
+  "text": "string",
+  "conversationId": "string",
+  "senderId": "string",
+  "createdAt": "ISO8601 string",
+  "metadata": { /* optional, e.g., edited: false */ }
+}
+```
+
+D. Send Group Message (client → server)
+```json
+{
+  "text": "string (1-2000)",
+  "targetGroupId": "string (24-hex ObjectId)"
+}
+```
+
+E. Group Message Sent (server → room)
+Same schema as C.
+
+F. Chat History Response (server → requester or ack.data)
+```json
+{
+  "messages": [ /* array of Message objects (see C) */ ],
+  "cursor": "optional pagination cursor string",
+  "hasMore": true
+}
+```
+
+G. Error Event
+```json
+{ "message": "human readable error" }
+```
+
+Validation rules summary:
+- text: required, trimmed length 1-2000
+- targetUserId/targetGroupId: 24-hex ObjectId
 - Private chats auto-create; group requires membership
+
+Frontend should:
+- Send payloads matching the schemas above
+- Prefer ack callback for immediate success/failure handling
+- Rely on `.sent` broadcasts to receive created messages and append to UI
 
 ---
 

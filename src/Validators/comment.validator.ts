@@ -4,12 +4,14 @@ import { objectId } from './User/auth.validator'
 const targetModel = z.enum(['Post', 'Comment'])
 
 export const CreateCommentValidator = {
-  body: z.strictObject({
-    content: z.string().min(1).optional(),
-    attachments: z.string().min(1).optional(),
-    refId: objectId,
-    onModel: targetModel,
-  }),
+  body: z
+    .strictObject({
+      content: z.string().min(1).optional(),
+      attachments: z.string().min(1).optional(),
+      refId: objectId,
+      onModel: targetModel,
+    })
+    .refine((value) => value.content !== undefined || value.attachments !== undefined, 'A comment must have content or an attachment'),
 }
 
 export const ListCommentsValidator = {

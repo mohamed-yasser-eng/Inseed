@@ -188,7 +188,7 @@ export class ProfileService {
     if (firstName !== undefined) updates.firstName = firstName
     if (lastName !== undefined) updates.lastName = lastName
     if (gender !== undefined) updates.gender = gender
-    if (DOB !== undefined) updates.DOB = DOB
+    if (DOB !== undefined) updates.DOB = new Date(DOB)
     if (phoneNumber !== undefined) updates.phoneNumber = encrypt(phoneNumber)
 
     if (email !== undefined && email !== user.email) {

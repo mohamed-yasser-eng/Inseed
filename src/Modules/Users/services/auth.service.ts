@@ -72,7 +72,7 @@ class AuthService {
       email,
       password: hashedPassword,
       gender,
-      DOB,
+      DOB: DOB ? new Date(DOB) : undefined,
       phoneNumber: encryptedPhoneNumber,
       OTPS: [confirmationOtp],
     })

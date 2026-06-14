@@ -1,7 +1,5 @@
-import { isValidObjectId } from 'mongoose'
 import { z } from 'zod'
-
-const objectId = z.string().refine((value) => isValidObjectId(value), 'invalid object id')
+import { objectId } from './User/auth.validator'
 
 export const SendPrivateMessageEventValidator = z.strictObject({
   text: z.string().min(1).max(2000),

@@ -9,7 +9,7 @@ const stringArrayFromBody = z.preprocess((value) => {
 export const CreatePostValidator = {
   body: z.object({
     description: z.string().min(1).optional(),
-    allowComments: z.coerce.boolean().optional(),
+    allowComments: z.stringbool().optional(),
     tags: stringArrayFromBody,
   }).strict(),
 }
@@ -20,7 +20,7 @@ export const UpdatePostValidator = {
   }),
   body: z.object({
     description: z.string().min(1).optional(),
-    allowComments: z.coerce.boolean().optional(),
+    allowComments: z.stringbool().optional(),
     tags: stringArrayFromBody,
     removeAttachments: z.preprocess((value) => {
       if (value === undefined) return undefined

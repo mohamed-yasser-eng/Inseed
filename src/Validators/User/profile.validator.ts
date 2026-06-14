@@ -5,10 +5,10 @@ import { objectId } from './auth.validator'
 const optionalProfileUpdates = z.object({
   firstName: z.string().min(3).optional(),
   lastName: z.string().min(3).optional(),
-  email: z.string().email().optional(),
+  email: z.email().optional(),
   gender: z.enum(GenderEnum).optional(),
-  DOB: z.coerce.date().optional(),
-  phoneNumber: z.string().min(11).max(11).optional(),
+  DOB: z.iso.date().optional(),
+  phoneNumber: z.string().regex(/^\d{11}$/, 'phone number must be exactly 11 digits').optional(),
 })
 
 export const UpdateProfileValidator = {

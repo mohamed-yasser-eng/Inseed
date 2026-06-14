@@ -27,7 +27,9 @@ export const validationMiddleware = (schema: SchemaType) => {
           }))
           validationErrors.push({ key, issues })
         } else {
-          ;(req as any)[key] = result.data
+          // Express 5 exposes req.query (and others) via getters with no setter,
+          // so plain assignment throws. Shadow the getter with the parsed data.
+          Object.defineProperty(req, key, { value: result.data, writable: true, configurable: true })
         }
       }
     }

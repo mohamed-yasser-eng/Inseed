@@ -20,6 +20,8 @@ import { isOriginAllowed } from './Utils'
 import { cleanupUploadedFiles, graphQLRateLimitMiddleware, rateLimitMiddleware } from './Middlewares'
 import { redis } from './Config/redis.config'
 import { SuccessResponse } from './Utils/Response/response-helper.utils'
+import swaggerUi from 'swagger-ui-express'
+import { swaggerSpec } from './Config/swagger.config'
 
 
 const app = express()
@@ -61,6 +63,22 @@ app.use('/api/users', controllers.profileController)
 app.use('/api/posts', controllers.postController)
 app.use('/api/comments', controllers.commentController)
 app.use('/api/reacts', controllers.reactController)
+
+// API docs: Swagger UI at /api-docs, raw spec at /api-docs.json.
+// helmet's global CSP blocks Swagger UI's inline assets, so relax it for this route only.
+// useDefaults:false is required — the merged defaults add `upgrade-insecure-requests`,
+// which rewrites Swagger UI's asset URLs to https and breaks the page over http (dev).
+const swaggerCsp = helmet.contentSecurityPolicy({
+  useDefaults: false,
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", "'unsafe-inline'"],
+    styleSrc: ["'self'", "'unsafe-inline'"],
+    imgSrc: ["'self'", 'data:', 'https:'],
+  },
+})
+app.get('/api-docs.json', (_req: Request, res: Response) => res.json(swaggerSpec))
+app.use('/api-docs', swaggerCsp, swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
 app.use(async (err: HttpException | Error | null, req: Request, res: Response, next: NextFunction) => {
   if (err) {

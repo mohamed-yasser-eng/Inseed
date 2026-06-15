@@ -4,6 +4,7 @@ Frontend/client contract for the backend.
 
 ## Contents
 
+- [Interactive Docs (Swagger UI)](#interactive-docs-swagger-ui)
 - [Base URL](#base-url)
 - [Authentication](#authentication)
 - [Response Shape](#response-shape)
@@ -12,6 +13,17 @@ Frontend/client contract for the backend.
 - [GraphQL](#graphql)
 - [Socket.IO](#socketio)
 - [Rate Limits](#rate-limits)
+
+## Interactive Docs (Swagger UI)
+
+| Resource | Path |
+| --- | --- |
+| Swagger UI | `GET /api-docs` |
+| Raw OpenAPI 3.0 spec | `GET /api-docs.json` |
+
+The spec is generated at runtime: request bodies, params, and queries come from the Zod
+validators in `src/Validators` (assembled in `src/Config/swagger.config.ts` and `src/Docs/`).
+To change a request contract, edit the validator — not the docs.
 
 ## Base URL
 
